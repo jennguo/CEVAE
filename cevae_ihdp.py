@@ -20,11 +20,11 @@ from utils import fc_net, get_y0_y1
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument('-reps', type=int, default=10)
-parser.add_argument('-earl', type=int, default=10)
-parser.add_argument('-lr', type=float, default=0.001)
-parser.add_argument('-opt', choices=['adam', 'adamax'], default='adam')
-parser.add_argument('-epochs', type=int, default=100)
+parser.add_argument('-reps', type=int, default=1) # number of replications; ##was 10
+parser.add_argument('-earl', type=int, default=10) #
+parser.add_argument('-lr', type=float, default=0.001) # learning rate
+parser.add_argument('-opt', choices=['adam', 'adamax'], default='adam') # optimizer
+parser.add_argument('-epochs', type=int, default=200)##change back to 100
 parser.add_argument('-print_every', type=int, default=10)
 args = parser.parse_args()
 
@@ -32,7 +32,7 @@ args.true_post = True
 
 
 dataset = IHDP(replications=args.reps)
-dimx = 25
+dimx = 25##was 25
 scores = np.zeros((args.reps, 3))
 scores_test = np.zeros((args.reps, 3))
 
@@ -43,13 +43,13 @@ nh, h = 3, 200  # number and size of hidden layers
 
 for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
     print '\nReplication {}/{}'.format(i + 1, args.reps)
-    (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train
+    (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train                             # tr, va, te = train, validation, test
     (xva, tva, yva), (y_cfva, mu0va, mu1va) = valid
     (xte, tte, yte), (y_cfte, mu0te, mu1te) = test
     evaluator_test = Evaluator(yte, tte, y_cf=y_cfte, mu0=mu0te, mu1=mu1te)
 
     # reorder features with binary first and continuous after
-    perm = binfeats + contfeats
+    perm = binfeats + contfeats     # the feature indices, in desired order
     xtr, xva, xte = xtr[:, perm], xva[:, perm], xte[:, perm]
 
     xalltr, talltr, yalltr = np.concatenate([xtr, xva], axis=0), np.concatenate([ttr, tva], axis=0), np.concatenate([ytr, yva], axis=0)
@@ -73,40 +73,40 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
         t_ph = tf.placeholder(tf.float32, [M, 1])
         y_ph = tf.placeholder(tf.float32, [M, 1])
 
-        x_ph = tf.concat([x_ph_bin, x_ph_cont], 1)
+        x_ph = tf.concat([x_ph_bin, x_ph_cont], 1)                                      # ph = placeholder?
         activation = tf.nn.elu
 
         # CEVAE model (decoder)
         # p(z)
-        z = Normal(loc=tf.zeros([tf.shape(x_ph)[0], d]), scale=tf.ones([tf.shape(x_ph)[0], d]))
+        z = Normal(loc=tf.zeros([tf.shape(x_ph)[0], d]), scale=tf.ones([tf.shape(x_ph)[0], d]))                     ## z is a normal around 0 with variance 1(?)
 
         # p(x|z)
         hx = fc_net(z, (nh - 1) * [h], [], 'px_z_shared', lamba=lamba, activation=activation)
         logits = fc_net(hx, [h], [[len(binfeats), None]], 'px_z_bin'.format(i + 1), lamba=lamba, activation=activation)
-        x1 = Bernoulli(logits=logits, dtype=tf.float32, name='bernoulli_px_z')
+        x1 = Bernoulli(logits=logits, dtype=tf.float32, name='bernoulli_px_z')                                      # x1 is the binary features, Bernoulli distributed with
 
         mu, sigma = fc_net(hx, [h], [[len(contfeats), None], [len(contfeats), tf.nn.softplus]], 'px_z_cont', lamba=lamba,
                            activation=activation)
-        x2 = Normal(loc=mu, scale=sigma, name='gaussian_px_z')
+        x2 = Normal(loc=mu, scale=sigma, name='gaussian_px_z')                                                      # x2 is the cts features, normally dsbd around
 
         # p(t|z)
-        logits = fc_net(z, [h], [[1, None]], 'pt_z', lamba=lamba, activation=activation)
+        logits = fc_net(z, [h], [[1, None]], 'pt_z', lamba=lamba, activation=activation)                            ##
         t = Bernoulli(logits=logits, dtype=tf.float32)
 
         # p(y|t,z)
         mu2_t0 = fc_net(z, nh * [h], [[1, None]], 'py_t0z', lamba=lamba, activation=activation)
         mu2_t1 = fc_net(z, nh * [h], [[1, None]], 'py_t1z', lamba=lamba, activation=activation)
-        y = Normal(loc=t * mu2_t1 + (1. - t) * mu2_t0, scale=tf.ones_like(mu2_t0))
+        y = Normal(loc=t * mu2_t1 + (1. - t) * mu2_t0, scale=tf.ones_like(mu2_t0))                                  ##
 
         # CEVAE variational approximation (encoder)
         # q(t|x)
         logits_t = fc_net(x_ph, [d], [[1, None]], 'qt', lamba=lamba, activation=activation)
-        qt = Bernoulli(logits=logits_t, dtype=tf.float32)
+        qt = Bernoulli(logits=logits_t, dtype=tf.float32)                                                           ##
         # q(y|x,t)
         hqy = fc_net(x_ph, (nh - 1) * [h], [], 'qy_xt_shared', lamba=lamba, activation=activation)
         mu_qy_t0 = fc_net(hqy, [h], [[1, None]], 'qy_xt0', lamba=lamba, activation=activation)
         mu_qy_t1 = fc_net(hqy, [h], [[1, None]], 'qy_xt1', lamba=lamba, activation=activation)
-        qy = Normal(loc=qt * mu_qy_t1 + (1. - qt) * mu_qy_t0, scale=tf.ones_like(mu_qy_t0))
+        qy = Normal(loc=qt * mu_qy_t1 + (1. - qt) * mu_qy_t0, scale=tf.ones_like(mu_qy_t0))                         ##
         # q(z|x,t,y)
         inpt2 = tf.concat([x_ph, qy], 1)
         hqz = fc_net(inpt2, (nh - 1) * [h], [], 'qz_xty_shared', lamba=lamba, activation=activation)
@@ -114,7 +114,7 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
                                    activation=activation)
         muq_t1, sigmaq_t1 = fc_net(hqz, [h], [[d, None], [d, tf.nn.softplus]], 'qz_xt1', lamba=lamba,
                                    activation=activation)
-        qz = Normal(loc=qt * muq_t1 + (1. - qt) * muq_t0, scale=qt * sigmaq_t1 + (1. - qt) * sigmaq_t0)
+        qz = Normal(loc=qt * muq_t1 + (1. - qt) * muq_t0, scale=qt * sigmaq_t1 + (1. - qt) * sigmaq_t0)             ##
 
         # Create data dictionary for edward
         data = {x1: x_ph_bin, x2: x_ph_cont, y: y_ph, qt: t_ph, t: t_ph, qy: y_ph}
