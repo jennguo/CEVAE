@@ -1,0 +1,9 @@
+Description of datasets
+
+ihdp_npci = original data that came with the CEVAE repo
+cfr_ = from CFRNet repo
+cfr_x = original data
+cfr_phi = data where x is deleted and phi (the representation learned by CFRNet, dim 200) is added
+cfr_phix = same as cfr_phi except x is not deleted
+cfr_phi25 = same as cfr_phi except phi is only 25 dimensional
+
