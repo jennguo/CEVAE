@@ -155,12 +155,12 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
             avg_loss = 0.0
 
             t0 = time.time()
-            widgets = ["epoch #%d|" % epoch, Percentage(), Bar(), ETA()]
-            pbar = ProgressBar(n_iter_per_epoch, widgets=widgets)
-            pbar.start()
+            ##widgets = ["epoch #%d|" % epoch, Percentage(), Bar(), ETA()]
+            ##pbar = ProgressBar(n_iter_per_epoch, widgets=widgets)
+            ##pbar.start()
             np.random.shuffle(idx)
             for j in range(n_iter_per_epoch):
-                pbar.update(j)
+                ##pbar.update(j)
                 batch = np.random.choice(idx, 100)
                 x_train, y_train, t_train = xtr[batch], ytr[batch], ttr[batch]
                 info_dict = inference.update(feed_dict={x_ph_bin: x_train[:, 0:len(binfeats)],
