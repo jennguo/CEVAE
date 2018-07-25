@@ -7,7 +7,6 @@ from datasets import IHDP
 
 import cevae_ihdp
 
-import sys
 import os
 
 import gc
@@ -70,13 +69,16 @@ def run(cfg_file, num_runs):
         f = open(used_cfg_file, 'w')
         f.close()
 
-    for i in range(num_runs):
-        cfg = sample_config(configs)
-        #if is_used_cfg(cfg, used_cfg_file):
-        #    print 'Configuration used, skipping'
-        #    continue
+    ##hardcoded
+    first_unused_run_number=0
+    while os.path.isfile(outdir + '/run%d.csv' % (first_unused_run_number+1)):
+        first_unused_run_number+=1
 
-        save_used_cfg(cfg, used_cfg_file)
+    for i in range(first_unused_run_number,first_unused_run_number+num_runs):
+        cfg = sample_config(configs)
+        while is_used_cfg(cfg, used_cfg_file):
+            print 'Configuration used, skipping: %s' % str(cfg)
+            cfg = sample_config(configs)
 
         print '------------------------------'
         print 'Run %d of %d:' % (i+1, num_runs)
@@ -85,75 +87,40 @@ def run(cfg_file, num_runs):
 
         parser = ArgumentParser()
 
-        parser.add_argument('-reps', type=int, default=cfg['reps'])  # number of replications; ##was 10
-        parser.add_argument('-earl', type=int, default=cfg['earl'])  #
-        parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # learning rate
-        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # optimizer
-        parser.add_argument('-epochs', type=int, default=cfg['epochs'])  ##change back to 100
+        parser.add_argument('-reps', type=int, default=cfg['reps'])  # was 10 todo change name 'reps' to 'n_experiments'
+        parser.add_argument('-earl', type=int, default=cfg['earl'])  # was 10
+        parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # was 0.001
+        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'
+        parser.add_argument('-epochs', type=int, default=cfg['epochs'])  # was 100
         parser.add_argument('-print_every', type=int, default=cfg['print_every'])
 
         args = parser.parse_args()
         args.true_post = True
 
-        dataset = IHDP(replications=args.reps) # todo add cfg options for path_data, binfeats, contfeats, etc.
+        path_data_unformatted = cfg['path_data_unformatted']
+        bin_feats = cfg['bin_feats']
+        dim_x=cfg['dim_x']
+
+        dataset = IHDP(path_data_unformatted=path_data_unformatted, dim_x=dim_x, replications=args.reps, bin_feats=bin_feats) # todo add cfg options for path_data, binfeats, contfeats, etc.
 
         scores = np.zeros((args.reps, 3))
         scores_test = np.zeros((args.reps, 3))
 
         M = None  # batch size during training
-        d = cfg['latent_dim']  # latent dimension; default 20
-        lamba = cfg['lambda'] # weight decay; default 1e-4
-        nh, h = cfg['n_hidden'], cfg['size_hidden']  # number and size of hidden layers; default 3,200
-        cevae_ihdp.run(args,dataset,scores,scores_test,M,d,lamba,nh,h,i+1)
+        d = cfg['latent_dim']  # latent dimension; was 20
+        lamba = cfg['lambda'] # weight decay; was 1e-4
+        nh, h = cfg['n_hidden'], cfg['size_hidden']  # number and size of hidden layers; was 3 and 200
+
+        cevae_ihdp.run(args,dataset,scores,scores_test,M,d,lamba,nh,h,i+1,outdir)
+
+        save_used_cfg(cfg, used_cfg_file)
 
 if __name__ == "__main__":
-    gc.set_debug(gc.DEBUG_LEAK)
-    run("config.txt", 100)
-
-
-"""#backup
-if __name__=="__main__":
-    parser = ArgumentParser()
-    parser.add_argument('-reps', type=int, default=100) # number of replications; ##was 10
-    parser.add_argument('-earl', type=int, default=10) #
-    parser.add_argument('-lr', type=float, default=0.001) # learning rate
-    parser.add_argument('-opt', choices=['adam', 'adamax'], default='adam') # optimizer
-    parser.add_argument('-epochs', type=int, default=100)##change back to 100
-    parser.add_argument('-print_every', type=int, default=10)
-    args = parser.parse_args()
-
-    args.true_post = True
-
-    dataset = IHDP(replications=args.reps)
-    #dimx = 25##was 25
-    scores = np.zeros((args.reps, 3))
-    scores_test = np.zeros((args.reps, 3))
-
-    M = None  # batch size during training
-    d = 20  # latent dimension
-    lamba = 1e-4  # weight decay
-    nh, h = 3, 200  # number and size of hidden layers
-
-    cevae_ihdp.run(args,dataset,scores,scores_test,M,d,lamba,nh,h)
-
-
-
-
-
-
-
-parser = ArgumentParser()
-
-        parser.add_argument('-reps', type=int, default=cfg['reps']) # number of replications; ##was 10
-        parser.add_argument('-earl', type=int, default=cfg['earl']) #
-        parser.add_argument('-lr', type=float, default=cfg['learning_rate']) # learning rate
-        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer']) # optimizer
-        parser.add_argument('-epochs', type=int, default=cfg['epochs'])##change back to 100
-        parser.add_argument('-print_every', type=int, default=cfg['print_every'])
-
-        print "owjwoiefjwoijwoierjgw"
-        print type(cfg['reps'])
-        args = parser.parse_args()
-
-
-"""
+    #gc.set_debug(gc.DEBUG_LEAK)
+    run("config.txt", 1)
+    # "config.txt" = where the configs are
+    # 1 = number of runs. It's 1 because if you run multiple runs, for some reason the memory keeps increasing
+    # (memory leaking? global variable increasing in size?) to the point where the process is killed.
+    # So the current workaround is to run one run inside this script, but to call this script
+    # many times if you want many runs.
+    # todo: incorporate the parameters into the sys.args

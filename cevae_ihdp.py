@@ -16,7 +16,7 @@ from scipy.stats import sem
 
 from utils import fc_net, get_y0_y1
 
-def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num):
+def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
 
     for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
         print '\nReplication {}/{}'.format(i + 1, args.reps)
@@ -192,7 +192,7 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num):
             statscsv = '{},{:0.3f},{:0.3f},{:0.3f},{:0.3f},{:0.3f},{:0.3f}\n'.format(i + 1,
                                                                                 score[0], score[1], score[2],
                                                                                 score_test[0], score_test[1], score_test[2])
-            text_file = open("results/run%d.csv" % run_num, "a")
+            text_file = open(outdir+"/run%d.csv" % run_num, "a")
             text_file.write(statscsv)
             text_file.close()
 
