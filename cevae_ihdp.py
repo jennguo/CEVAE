@@ -26,14 +26,14 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
         evaluator_test = Evaluator(yte, tte, y_cf=y_cfte, mu0=mu0te, mu1=mu1te)
 
         # reorder features with binary first and continuous after
-        perm = binfeats + contfeats     # the feature indices, in desired order
+        perm = binfeats + contfeats     # the permuted feature indices, in desired order
         xtr, xva, xte = xtr[:, perm], xva[:, perm], xte[:, perm]
 
         xalltr, talltr, yalltr = np.concatenate([xtr, xva], axis=0), np.concatenate([ttr, tva], axis=0), np.concatenate([ytr, yva], axis=0)
-        evaluator_train = Evaluator(yalltr, talltr, y_cf=np.concatenate([y_cftr, y_cfva], axis=0),
+        evaluator_train = Evaluator(y=yalltr, t=talltr, y_cf=np.concatenate([y_cftr, y_cfva], axis=0),
                                     mu0=np.concatenate([mu0tr, mu0va], axis=0), mu1=np.concatenate([mu1tr, mu1va], axis=0))
 
-        # zero mean, unit variance for y during training
+        # zero mean, unit variance for y during training ##is this batch normalization?
         ym, ys = np.mean(ytr), np.std(ytr)
         ytr, yva = (ytr - ym) / ys, (yva - ym) / ys
         best_logpvalid = - np.inf
