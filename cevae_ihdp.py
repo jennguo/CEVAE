@@ -14,9 +14,24 @@ import numpy as np
 import time
 from scipy.stats import sem
 
-from utils import fc_net, get_y0_y1
+from utils import fc_net, get_y0_y1,get_z
 
 def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
+
+    cfr_train={}
+    cfr_test={}
+    cfr_train['ate'] = np.array(4)
+    cfr_train['yadd'] = np.array(0)
+    cfr_train['ymul'] = np.array(1)
+    cfr_test['ate'] = np.array(4)
+    cfr_test['yadd'] = np.array(0)
+    cfr_test['ymul'] = np.array(1)
+
+    for key in ['t','yf','ycf','mu0','mu1']:
+        cfr_train[key] = np.zeros(shape=(672, args.reps))
+        cfr_test[key] = np.zeros(shape=(75, args.reps))
+    cfr_train['x'] = np.zeros(shape=(672, 50, args.reps))
+    cfr_test['x'] = np.zeros(shape=(75, 50, args.reps))
 
     for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
         print '\nReplication {}/{}'.format(i + 1, args.reps)
@@ -183,6 +198,19 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
             score_test = evaluator_test.calc_stats(y1t, y0t)
             scores_test[i, :] = score_test
 
+            cfr_train['x'][:,:,i]=np.concatenate((xalltr,get_z(sess, qz, f0, f1, shape=(672, d), L=200)[0]),axis=1)
+            cfr_test['x'][:,:,i]=np.concatenate((xte,get_z(sess, qz, f0t, f1t, shape=(75, d), L=200)[0]),axis=1)
+            cfr_train['yf'][:, i] = yalltr[:,0]
+            cfr_test['yf'][:, i] = yte[:,0]
+            cfr_train['ycf'][:, i] = np.concatenate([y_cftr, y_cfva], axis=0)[:,0]
+            cfr_test['ycf'][:, i] = y_cfte[:,0]
+            cfr_train['t'][:, i] = talltr[:,0]
+            cfr_test['t'][:, i] = tte[:,0]
+            cfr_train['mu0'][:, i] = np.concatenate([mu0tr, mu0va], axis=0)[:,0]
+            cfr_test['mu0'][:, i] = mu0te[:,0]
+            cfr_train['mu1'][:, i] = np.concatenate([mu1tr, mu1va], axis=0)[:,0]
+            cfr_test['mu1'][:, i] = mu1te[:,0]
+
             print 'Replication: {}/{}, tr_ite: {:0.3f}, tr_ate: {:0.3f}, tr_pehe: {:0.3f}' \
                   ', te_ite: {:0.3f}, te_ate: {:0.3f}, te_pehe: {:0.3f}'.format(i + 1, args.reps,
                                                                                 score[0], score[1], score[2],
@@ -198,6 +226,8 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
 
             sess.close()
 
+    np.savez('results/results_to_feed_to_cfrnet/cevae_z_1-{}.train.npz'.format(args.reps), **cfr_train)
+    np.savez('results/results_to_feed_to_cfrnet/cevae_z_1-{}.test.npz'.format(args.reps), **cfr_test)
 
     print 'CEVAE model total scores'
     means, stds = np.mean(scores, axis=0), sem(scores, axis=0)

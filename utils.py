@@ -42,3 +42,23 @@ def get_y0_y1(sess, y, f0, f1, shape=(), L=1, verbose=True):
     return y0, y1
 
 
+def get_z(sess, z, f0, f1, shape=(), L=1, verbose=True):
+    z0, z1 = np.zeros(shape, dtype=np.float32), np.zeros(shape, dtype=np.float32)
+    z0sq, z1sq = np.zeros(shape, dtype=np.float32), np.zeros(shape, dtype=np.float32)
+
+    # ymean = y.mean()
+    for l in xrange(L):#sample L times
+        if L > 1 and verbose:
+            sys.stdout.write('\r Sample {}/{}'.format(l + 1, L))
+            sys.stdout.flush()
+        zl0=sess.run(z, feed_dict=f0)
+        zl1=sess.run(z, feed_dict=f1)
+        z0 += zl0
+        z1 += zl1
+        z0sq += np.square(zl0)
+        z1sq += np.square(zl1)
+    z0std=np.sqrt(z0sq/L-np.square(z0/L))
+    z1std=np.sqrt(z1sq/L-np.square(z1/L))
+    if L > 1 and verbose:
+        print
+    return z0/L, z0std, z1/L, z1std
