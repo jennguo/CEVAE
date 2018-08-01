@@ -90,7 +90,7 @@ def run(cfg_file, num_runs):
         parser.add_argument('-reps', type=int, default=cfg['reps'])  # was 10 todo change name 'reps' to 'n_experiments'
         parser.add_argument('-earl', type=int, default=cfg['earl'])  # was 10
         parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # was 0.001
-        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'
+        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'; has no effect!
         parser.add_argument('-epochs', type=int, default=cfg['epochs'])  # was 100
         parser.add_argument('-print_every', type=int, default=cfg['print_every'])
 

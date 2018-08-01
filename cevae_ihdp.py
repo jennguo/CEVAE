@@ -55,7 +55,7 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
 
             # CEVAE model (decoder)
             # p(z)
-            z = Normal(loc=tf.zeros([tf.shape(x_ph)[0], d]), scale=tf.ones([tf.shape(x_ph)[0], d]))                     ## z is a normal around 0 with variance 1(?)
+            z = Normal(loc=tf.zeros([tf.shape(x_ph)[0], d]), scale=tf.ones([tf.shape(x_ph)[0], d]))                     ## z is a normal around 0's with variance 1's
 
             # p(x|z)
             hx = fc_net(z, (nh - 1) * [h], [], 'px_z_shared', lamba=lamba, activation=activation)
