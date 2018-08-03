@@ -65,6 +65,9 @@ def run(cfg_file, num_runs):
     outdir = configs['outdir'][0]
     used_cfg_file = '%s/used_configs.txt' % outdir
 
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     if not os.path.isfile(used_cfg_file):
         f = open(used_cfg_file, 'w')
         f.close()
@@ -87,26 +90,24 @@ def run(cfg_file, num_runs):
 
         parser = ArgumentParser()
 
+        parser.add_argument('-outdir', type=str, default=outdir)
         parser.add_argument('-reps_begin', type=int, default=cfg['reps_begin'])
         parser.add_argument('-reps_end', type=int, default=cfg['reps_end'])  # was 10 todo change name 'reps' to 'n_experiments'
-        parser.add_argument('-earl', type=int, default=cfg['earl'])  # was 10
-        parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # was 0.001
-        parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'; has no effect!
         parser.add_argument('-epochs', type=int, default=cfg['epochs'])  # was 100
         parser.add_argument('-print_every', type=int, default=cfg['print_every'])
+        parser.add_argument('-earl', type=int, default=cfg['earl'])  # was 10
+        parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # was 0.001
         parser.add_argument('-latent_dim', type=int, default=cfg['latent_dim'])
         parser.add_argument('-lamba', type=float, default=cfg['lambda']) # weight decay; was 1e-4
         parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
         parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
-        parser.add_argument('-outdir', type=str, default=outdir)
 
         args = parser.parse_args()
         args.true_post = True
 
         path_data_unformatted = cfg['path_data_unformatted']
         bin_feats = cfg['bin_feats']
-        dim_x=cfg['dim_x']
-
+        dim_x = cfg['dim_x']
         dataset = IHDP(path_data_unformatted=path_data_unformatted, dim_x=dim_x, reps_begin=args.reps_begin, reps_end=args.reps_end, bin_feats=bin_feats) # todo add cfg options for path_data, binfeats, contfeats, etc.
 
         scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
