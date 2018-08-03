@@ -12,14 +12,18 @@ from edward.models import Bernoulli, Normal
 from evaluation import Evaluator
 import numpy as np
 import time
+import datetime
+import os
 from scipy.stats import sem
 
 from utils import fc_net, get_y0_y1
 
 def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
+#TODO: combine other parameters into args
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")
 
-    for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
-        print '\nReplication {}/{}'.format(i + 1, args.reps)
+    for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test(),args.reps_begin-1):
+        print '\nReplication {}/[{},{}]'.format(i + 1, args.reps_begin, args.reps_end)
         (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train                             # tr, va, te = train, validation, test
         (xva, tva, yva), (y_cfva, mu0va, mu1va) = valid
         (xte, tte, yte), (y_cfte, mu0te, mu1te) = test
@@ -154,7 +158,9 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
                     if logpvalid >= best_logpvalid:
                         print 'Improved validation bound, old: {:0.3f}, new: {:0.3f}'.format(best_logpvalid, logpvalid)
                         best_logpvalid = logpvalid
-                        saver.save(sess, 'models/m6-ihdp')
+                        if not os.path.exists('models/%s' % timestamp):
+                            os.makedirs('models/%s' % timestamp)
+                        saver.save(sess, 'models/%s/m6-ihdp' % timestamp)
 
                 if epoch % args.print_every == 0:
                     y0, y1 = get_y0_y1(sess, y_post, f0, f1, shape=yalltr.shape, L=1)
@@ -172,19 +178,19 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
                                                rmses_train[0], rmses_train[1], score_test[0], score_test[1], score_test[2],
                                                time.time() - t0)
 
-            saver.restore(sess, 'models/m6-ihdp')
+            saver.restore(sess, 'models/%s/m6-ihdp' % timestamp)
             y0, y1 = get_y0_y1(sess, y_post, f0, f1, shape=yalltr.shape, L=100)
             y0, y1 = y0 * ys + ym, y1 * ys + ym
             score = evaluator_train.calc_stats(y1, y0)
-            scores[i, :] = score
+            scores[i-(args.reps_begin-1), :] = score
 
             y0t, y1t = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=100)
             y0t, y1t = y0t * ys + ym, y1t * ys + ym
             score_test = evaluator_test.calc_stats(y1t, y0t)
-            scores_test[i, :] = score_test
+            scores_test[i-(args.reps_begin-1), :] = score_test
 
-            print 'Replication: {}/{}, tr_ite: {:0.3f}, tr_ate: {:0.3f}, tr_pehe: {:0.3f}' \
-                  ', te_ite: {:0.3f}, te_ate: {:0.3f}, te_pehe: {:0.3f}'.format(i + 1, args.reps,
+            print 'Replication: {}/[{},{}], tr_ite: {:0.3f}, tr_ate: {:0.3f}, tr_pehe: {:0.3f}' \
+                  ', te_ite: {:0.3f}, te_ate: {:0.3f}, te_pehe: {:0.3f}'.format(i + 1, args.reps_begin, args.reps_end,
                                                                                 score[0], score[1], score[2],
                                                                                 score_test[0], score_test[1], score_test[2])
 

@@ -2,23 +2,24 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 class IHDP(object):
-    def __init__(self, path_data_unformatted, dim_x, replications, bin_feats=()):
+    def __init__(self, path_data_unformatted, dim_x, reps_begin, reps_end, bin_feats=()):
         self.path_data_unformatted = path_data_unformatted
-        self.replications = replications
+        self.reps_begin = reps_begin
+        self.reps_end = reps_end
         # which features are binary
         self.binfeats = list(bin_feats)
         # which features are continuous
         self.contfeats = [i for i in xrange(dim_x) if i not in self.binfeats]
 
     def __iter__(self):
-        for i in xrange(self.replications):
+        for i in xrange(self.reps_begin-1, self.reps_end):
             data = np.loadtxt(self.path_data_unformatted % (i + 1), delimiter=',')
             t, y, y_cf = data[:, 0], data[:, 1][:, np.newaxis], data[:, 2][:, np.newaxis]
             mu_0, mu_1, x = data[:, 3][:, np.newaxis], data[:, 4][:, np.newaxis], data[:, 5:]
             yield (x, t, y), (y_cf, mu_0, mu_1)
 
     def get_train_valid_test(self):
-        for i in xrange(self.replications):
+        for i in xrange(self.reps_begin-1, self.reps_end):
             data = np.loadtxt(self.path_data_unformatted % (i + 1), delimiter=',')
             t, y, y_cf = data[:, 0][:, np.newaxis], data[:, 1][:, np.newaxis], data[:, 2][:, np.newaxis]
             mu_0, mu_1, x = data[:, 3][:, np.newaxis], data[:, 4][:, np.newaxis], data[:, 5:]

@@ -87,7 +87,8 @@ def run(cfg_file, num_runs):
 
         parser = ArgumentParser()
 
-        parser.add_argument('-reps', type=int, default=cfg['reps'])  # was 10 todo change name 'reps' to 'n_experiments'
+        parser.add_argument('-reps_begin', type=int, default=cfg['reps_begin'])
+        parser.add_argument('-reps_end', type=int, default=cfg['reps_end'])  # was 10 todo change name 'reps' to 'n_experiments'
         parser.add_argument('-earl', type=int, default=cfg['earl'])  # was 10
         parser.add_argument('-lr', type=float, default=cfg['learning_rate'])  # was 0.001
         parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'; has no effect!
@@ -101,10 +102,10 @@ def run(cfg_file, num_runs):
         bin_feats = cfg['bin_feats']
         dim_x=cfg['dim_x']
 
-        dataset = IHDP(path_data_unformatted=path_data_unformatted, dim_x=dim_x, replications=args.reps, bin_feats=bin_feats) # todo add cfg options for path_data, binfeats, contfeats, etc.
+        dataset = IHDP(path_data_unformatted=path_data_unformatted, dim_x=dim_x, reps_begin=args.reps_begin, reps_end=args.reps_end, bin_feats=bin_feats) # todo add cfg options for path_data, binfeats, contfeats, etc.
 
-        scores = np.zeros((args.reps, 3))
-        scores_test = np.zeros((args.reps, 3))
+        scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
+        scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
 
         M = None  # batch size during training
         d = cfg['latent_dim']  # latent dimension; was 20
