@@ -94,6 +94,11 @@ def run(cfg_file, num_runs):
         parser.add_argument('-opt', choices=['adam', 'adamax'], default=cfg['optimizer'])  # was 'adam'; has no effect!
         parser.add_argument('-epochs', type=int, default=cfg['epochs'])  # was 100
         parser.add_argument('-print_every', type=int, default=cfg['print_every'])
+        parser.add_argument('-latent_dim', type=int, default=cfg['latent_dim'])
+        parser.add_argument('-lamba', type=float, default=cfg['lambda']) # weight decay; was 1e-4
+        parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
+        parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
+        parser.add_argument('-outdir', type=str, default=outdir)
 
         args = parser.parse_args()
         args.true_post = True
@@ -108,11 +113,8 @@ def run(cfg_file, num_runs):
         scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
 
         M = None  # batch size during training
-        d = cfg['latent_dim']  # latent dimension; was 20
-        lamba = cfg['lambda'] # weight decay; was 1e-4
-        nh, h = cfg['n_hidden'], cfg['size_hidden']  # number and size of hidden layers; was 3 and 200
 
-        cevae_ihdp.run(args,dataset,scores,scores_test,M,d,lamba,nh,h,i+1,outdir)
+        cevae_ihdp.run(args,dataset,scores,scores_test,M,i+1)
 
         save_used_cfg(cfg, used_cfg_file)
 

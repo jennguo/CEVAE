@@ -18,8 +18,12 @@ from scipy.stats import sem
 
 from utils import fc_net, get_y0_y1
 
-def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
 #TODO: combine other parameters into args
+def run(args,dataset,scores,scores_test,M,run_num):
+    d = args.latent_dim
+    nh = args.n_hidden
+    h = args.size_hidden
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S-%f")
 
     for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test(),args.reps_begin-1):
@@ -62,38 +66,38 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
             z = Normal(loc=tf.zeros([tf.shape(x_ph)[0], d]), scale=tf.ones([tf.shape(x_ph)[0], d]))                     ## z is a normal around 0's with variance 1's
 
             # p(x|z)
-            hx = fc_net(z, (nh - 1) * [h], [], 'px_z_shared', lamba=lamba, activation=activation)
-            logits = fc_net(hx, [h], [[len(binfeats), None]], 'px_z_bin'.format(i + 1), lamba=lamba, activation=activation)
+            hx = fc_net(z, (nh - 1) * [h], [], 'px_z_shared', lamba=args.lamba, activation=activation)
+            logits = fc_net(hx, [h], [[len(binfeats), None]], 'px_z_bin'.format(i + 1), lamba=args.lamba, activation=activation)
             x1 = Bernoulli(logits=logits, dtype=tf.float32, name='bernoulli_px_z')                                      # x1 is the binary features, Bernoulli distributed with
 
-            mu, sigma = fc_net(hx, [h], [[len(contfeats), None], [len(contfeats), tf.nn.softplus]], 'px_z_cont', lamba=lamba,
+            mu, sigma = fc_net(hx, [h], [[len(contfeats), None], [len(contfeats), tf.nn.softplus]], 'px_z_cont', lamba=args.lamba,
                                activation=activation)
             x2 = Normal(loc=mu, scale=sigma, name='gaussian_px_z')                                                      # x2 is the cts features, normally dsbd around
 
             # p(t|z)
-            logits = fc_net(z, [h], [[1, None]], 'pt_z', lamba=lamba, activation=activation)                            ##
+            logits = fc_net(z, [h], [[1, None]], 'pt_z', lamba=args.lamba, activation=activation)                            ##
             t = Bernoulli(logits=logits, dtype=tf.float32)
 
             # p(y|t,z)
-            mu2_t0 = fc_net(z, nh * [h], [[1, None]], 'py_t0z', lamba=lamba, activation=activation)
-            mu2_t1 = fc_net(z, nh * [h], [[1, None]], 'py_t1z', lamba=lamba, activation=activation)
+            mu2_t0 = fc_net(z, nh * [h], [[1, None]], 'py_t0z', lamba=args.lamba, activation=activation)
+            mu2_t1 = fc_net(z, nh * [h], [[1, None]], 'py_t1z', lamba=args.lamba, activation=activation)
             y = Normal(loc=t * mu2_t1 + (1. - t) * mu2_t0, scale=tf.ones_like(mu2_t0))                                  ##
 
             # CEVAE variational approximation (encoder)
             # q(t|x)
-            logits_t = fc_net(x_ph, [d], [[1, None]], 'qt', lamba=lamba, activation=activation)
+            logits_t = fc_net(x_ph, [d], [[1, None]], 'qt', lamba=args.lamba, activation=activation)
             qt = Bernoulli(logits=logits_t, dtype=tf.float32)                                                           ##
             # q(y|x,t)
-            hqy = fc_net(x_ph, (nh - 1) * [h], [], 'qy_xt_shared', lamba=lamba, activation=activation)
-            mu_qy_t0 = fc_net(hqy, [h], [[1, None]], 'qy_xt0', lamba=lamba, activation=activation)
-            mu_qy_t1 = fc_net(hqy, [h], [[1, None]], 'qy_xt1', lamba=lamba, activation=activation)
+            hqy = fc_net(x_ph, (nh - 1) * [h], [], 'qy_xt_shared', lamba=args.lamba, activation=activation)
+            mu_qy_t0 = fc_net(hqy, [h], [[1, None]], 'qy_xt0', lamba=args.lamba, activation=activation)
+            mu_qy_t1 = fc_net(hqy, [h], [[1, None]], 'qy_xt1', lamba=args.lamba, activation=activation)
             qy = Normal(loc=qt * mu_qy_t1 + (1. - qt) * mu_qy_t0, scale=tf.ones_like(mu_qy_t0))                         ##
             # q(z|x,t,y)
             inpt2 = tf.concat([x_ph, qy], 1)
-            hqz = fc_net(inpt2, (nh - 1) * [h], [], 'qz_xty_shared', lamba=lamba, activation=activation)
-            muq_t0, sigmaq_t0 = fc_net(hqz, [h], [[d, None], [d, tf.nn.softplus]], 'qz_xt0', lamba=lamba,
+            hqz = fc_net(inpt2, (nh - 1) * [h], [], 'qz_xty_shared', lamba=args.lamba, activation=activation)
+            muq_t0, sigmaq_t0 = fc_net(hqz, [h], [[d, None], [d, tf.nn.softplus]], 'qz_xt0', lamba=args.lamba,
                                        activation=activation)
-            muq_t1, sigmaq_t1 = fc_net(hqz, [h], [[d, None], [d, tf.nn.softplus]], 'qz_xt1', lamba=lamba,
+            muq_t1, sigmaq_t1 = fc_net(hqz, [h], [[d, None], [d, tf.nn.softplus]], 'qz_xt1', lamba=args.lamba,
                                        activation=activation)
             qz = Normal(loc=qt * muq_t1 + (1. - qt) * muq_t0, scale=qt * sigmaq_t1 + (1. - qt) * sigmaq_t0)             ##
 
@@ -198,7 +202,7 @@ def run(args,dataset,scores,scores_test,M,d,lamba,nh,h,run_num,outdir):
             statscsv = '{},{:0.3f},{:0.3f},{:0.3f},{:0.3f},{:0.3f},{:0.3f}\n'.format(i + 1,
                                                                                 score[0], score[1], score[2],
                                                                                 score_test[0], score_test[1], score_test[2])
-            text_file = open(outdir+"/run%d.csv" % run_num, "a")
+            text_file = open(args.outdir+"/run%d.csv" % run_num, "a")
             text_file.write(statscsv)
             text_file.close()
 
