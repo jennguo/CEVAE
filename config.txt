@@ -9,6 +9,15 @@ latent_dim=[25]
 lambda=[3e-5]
 n_hidden=[2]
 size_hidden=[300]
+
+use_cfrnet_structure=[True]
+cfr_n_phi=[2]
+cfr_n_mu=[3]
+wass_lambda=[7]
+wass_iterations=[15]
+wass_bpt=[True]
+wass_use_p_correction=[True]
+
 path_data_unformatted='datasets/IHDP (experimental copy)/csv/cfr_x_%d.csv'
 bin_feats=[[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]]
 dim_x=25

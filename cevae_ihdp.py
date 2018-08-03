@@ -16,7 +16,7 @@ import datetime
 import os
 from scipy.stats import sem
 
-from utils import fc_net, get_y0_y1
+from utils import fc_net, get_y0_y1, wasserstein
 
 #TODO: combine other parameters into args
 def run(args,dataset,scores,scores_test,M,run_num):
@@ -79,8 +79,13 @@ def run(args,dataset,scores,scores_test,M,run_num):
             t = Bernoulli(logits=logits, dtype=tf.float32)
 
             # p(y|t,z)
-            mu2_t0 = fc_net(z, nh * [h], [[1, None]], 'py_t0z', lamba=args.lamba, activation=activation)
-            mu2_t1 = fc_net(z, nh * [h], [[1, None]], 'py_t1z', lamba=args.lamba, activation=activation)
+            if args.use_cfrnet_structure:
+                hy = fc_net(z, args.cfr_n_phi * [h], [[1, None]], 'py_shared', lamba=args.lamba, activation=activation)#is this the right scope name
+                mu2_t0 = fc_net(hy, args.cfr_n_mu * [h], [[1, None]], 'py_t0z', lamba=args.lamba, activation=activation)
+                mu2_t1 = fc_net(hy, args.cfr_n_mu * [h], [[1, None]], 'py_t1z', lamba=args.lamba, activation=activation)
+            else:
+                mu2_t0 = fc_net(z, nh * [h], [[1, None]], 'py_t0z', lamba=args.lamba, activation=activation)
+                mu2_t1 = fc_net(z, nh * [h], [[1, None]], 'py_t1z', lamba=args.lamba, activation=activation)
             y = Normal(loc=t * mu2_t1 + (1. - t) * mu2_t0, scale=tf.ones_like(mu2_t0))                                  ##
 
             # CEVAE variational approximation (encoder)
@@ -118,6 +123,22 @@ def run(args,dataset,scores,scores_test,M,run_num):
                                         tf.reduce_sum(x1_post_eval.log_prob(x_ph_bin), axis=1) +
                                         tf.reduce_sum(x2_post_eval.log_prob(x_ph_cont), axis=1) +
                                         tf.reduce_sum(z.log_prob(qz.mean()) - qz.log_prob(qz.mean()), axis=1))
+
+            if args.use_cfrnet_structure:
+                # am i using the right t
+                # change p to be different from 0.5?
+                # find best lam(bda)
+                # what is backpropT?
+                # find best its (iterations)
+                if args.wass_use_p_correction:
+                    p = np.average(ttr)
+                else:
+                    p = 0.5
+                #if args.wass_use_ttr_instead_of_t:
+                #    ipm_dist, _ = wasserstein(hy, ttr, p, lam=args.wass_lambda, its=args.wass_iterations, sq=False, backpropT=args.wass_bpt)
+                #else:
+                ipm_dist, _ = wasserstein(hy, t, p, lam=args.wass_lambda, its=args.wass_iterations, sq=False, backpropT=args.wass_bpt)
+                tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, ipm_dist)
 
             inference = ed.KLqp({z: qz}, data)
             optimizer = tf.train.AdamOptimizer(learning_rate=args.lr)

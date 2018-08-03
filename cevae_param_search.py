@@ -102,6 +102,14 @@ def run(cfg_file, num_runs):
         parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
         parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
 
+        parser.add_argument('-use_cfrnet_structure', type=bool, default=cfg['use_cfrnet_structure'])
+        parser.add_argument('-cfr_n_phi', type=int, default=cfg['cfr_n_phi'])
+        parser.add_argument('-cfr_n_mu', type=int, default=cfg['cfr_n_mu'])
+        parser.add_argument('-wass_lambda', type=float, default=cfg['wass_lambda'])
+        parser.add_argument('-wass_iterations', type=float, default=cfg['wass_iterations'])
+        parser.add_argument('-wass_bpt', type=bool, default=cfg['wass_bpt'])
+        parser.add_argument('-wass_use_p_correction', type=bool, default=cfg['wass_use_p_correction'])
+
         args = parser.parse_args()
         args.true_post = True
 
