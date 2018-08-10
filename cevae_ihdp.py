@@ -138,7 +138,7 @@ def run(args,dataset,scores,scores_test,M,run_num):
                 #    ipm_dist, _ = wasserstein(hy, ttr, p, lam=args.wass_lambda, its=args.wass_iterations, sq=False, backpropT=args.wass_bpt)
                 #else:
                 ipm_dist, _ = wasserstein(hy, t, p, lam=args.wass_lambda, its=args.wass_iterations, sq=False, backpropT=args.wass_bpt)
-                tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, ipm_dist)
+                tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, args.wass_alpha*ipm_dist)
 
             inference = ed.KLqp({z: qz}, data)
             optimizer = tf.train.AdamOptimizer(learning_rate=args.lr)

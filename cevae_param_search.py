@@ -9,8 +9,6 @@ import cevae_ihdp
 
 import os
 
-import gc
-
 def load_config(cfg_file):
     cfg = {}
 
@@ -105,6 +103,7 @@ def run(cfg_file, num_runs):
         parser.add_argument('-use_cfrnet_structure', type=bool, default=cfg['use_cfrnet_structure'])
         parser.add_argument('-cfr_n_phi', type=int, default=cfg['cfr_n_phi'])
         parser.add_argument('-cfr_n_mu', type=int, default=cfg['cfr_n_mu'])
+        parser.add_argument('-wass_alpha', type=float, default=cfg['wass_alpha'])
         parser.add_argument('-wass_lambda', type=float, default=cfg['wass_lambda'])
         parser.add_argument('-wass_iterations', type=float, default=cfg['wass_iterations'])
         parser.add_argument('-wass_bpt', type=bool, default=cfg['wass_bpt'])
