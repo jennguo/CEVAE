@@ -32,6 +32,12 @@ def sample_config(configs):
         cfg_sample[k] = opts[c]
     return cfg_sample
 
+def num_config_choices(configs):
+    num_choices = 1
+    for k in configs.keys():
+        num_choices *= len(configs[k])
+    return num_choices
+
 def cfg_string(cfg):
     ks = sorted(cfg.keys())
     cfg_str = ','.join(['%s:%s' % (k, str(cfg[k])) for k in ks])
@@ -77,9 +83,19 @@ def run(cfg_file, num_runs):
 
     for i in range(first_unused_run_number,first_unused_run_number+num_runs):
         cfg = sample_config(configs)
-        while is_used_cfg(cfg, used_cfg_file):
-            print 'Configuration used, skipping: %s' % str(cfg)
+        num_configs = num_config_choices(configs)
+        print('%d possible config combinations' % num_configs)
+
+        ln_prob_of_missing_config = -7
+        j = 0
+        max_j = -ln_prob_of_missing_config * num_configs
+        while is_used_cfg(cfg, used_cfg_file) and j < max_j:
             cfg = sample_config(configs)
+            j += 1
+        print('Skipped %d configs.' % j)
+
+        if j == max_j:
+            raise Exception('All config combinations have been tested.')
 
         print '------------------------------'
         print 'Run %d of %d:' % (i+1, num_runs)
