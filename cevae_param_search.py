@@ -116,7 +116,7 @@ def run(cfg_file, num_runs):
         parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
         parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
 
-        parser.add_argument('-use_cfrnet_structure', type=bool, default=cfg['use_cfrnet_structure'])
+        parser.add_argument('-use_cfrnet_structure', type=bool, default=(cfg['wass_alpha'] < 0))
         parser.add_argument('-cfr_n_phi', type=int, default=cfg['cfr_n_phi'])
         parser.add_argument('-cfr_n_mu', type=int, default=cfg['cfr_n_mu'])
         parser.add_argument('-wass_alpha', type=float, default=cfg['wass_alpha'])
@@ -143,7 +143,6 @@ def run(cfg_file, num_runs):
         save_used_cfg(cfg, used_cfg_file)
 
 if __name__ == "__main__":
-    #gc.set_debug(gc.DEBUG_LEAK)
     run("config.txt", 1)
     # "config.txt" = where the configs are
     # 1 = number of runs. It's 1 because if you run multiple runs, for some reason the memory keeps increasing
