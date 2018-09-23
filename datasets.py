@@ -1,11 +1,30 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
+import os
+
+def load_info(info_file):
+    info = {}
+    with open(info_file, 'r') as f:
+        for l in f:
+            l = l.strip()
+            if len(l)>0 and not l[0] == '#':
+                vs = l.split('=')
+                if len(vs)>0:
+                    k,v = (vs[0], eval(vs[1]))
+                    info[k] = v
+    return info
 
 class IHDP(object):
-    def __init__(self, path_data_unformatted, dim_x, reps_begin, reps_end, bin_feats=()):
+    def __init__(self, path_data_unformatted, reps_begin, reps_end):
         self.path_data_unformatted = path_data_unformatted
         self.reps_begin = reps_begin
         self.reps_end = reps_end
+
+        path_info_file = os.path.dirname(path_data_unformatted) + '/info.txt'
+        info = load_info(path_info_file)
+        bin_feats = info['bin_feats']
+        dim_x = info['dim_x']
+
         # which features are binary
         self.binfeats = list(bin_feats)
         # which features are continuous

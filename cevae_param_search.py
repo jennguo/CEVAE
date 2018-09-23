@@ -116,7 +116,7 @@ def run(cfg_file, num_runs):
         parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
         parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
 
-        parser.add_argument('-use_cfrnet_structure', type=bool, default=(cfg['wass_alpha'] < 0))
+        parser.add_argument('-use_cfrnet_structure', type=bool, default=(cfg['wass_alpha'] != -1))
         parser.add_argument('-cfr_n_phi', type=int, default=cfg['cfr_n_phi'])
         parser.add_argument('-cfr_n_mu', type=int, default=cfg['cfr_n_mu'])
         parser.add_argument('-wass_alpha', type=float, default=cfg['wass_alpha'])
@@ -129,9 +129,7 @@ def run(cfg_file, num_runs):
         args.true_post = True
 
         path_data_unformatted = cfg['path_data_unformatted']
-        bin_feats = cfg['bin_feats']
-        dim_x = cfg['dim_x']
-        dataset = IHDP(path_data_unformatted=path_data_unformatted, dim_x=dim_x, reps_begin=args.reps_begin, reps_end=args.reps_end, bin_feats=bin_feats) # todo add cfg options for path_data, binfeats, contfeats, etc.
+        dataset = IHDP(path_data_unformatted, args.reps_begin, args.reps_end)
 
         scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
         scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
