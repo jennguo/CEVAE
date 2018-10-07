@@ -130,15 +130,22 @@ def run(cfg_file, num_runs):
         args.true_post = True
 
         path_data_unformatted = cfg['path_data_unformatted']
-        dataset = IHDP(path_data_unformatted, args.reps_begin, args.reps_end)
+        if 'ihdp' in path_data_unformatted:
+            dataset_name = 'ihdp'
+        elif 'twins' in path_data_unformatted:
+            dataset_name = 'twins'
+        else:
+            dataset_name = None
 
-        scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
-        scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
+        if dataset_name == 'ihdp':
+            dataset = IHDP(path_data_unformatted, args.reps_begin, args.reps_end)
 
+            scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
+            scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
 
-        cevae_ihdp.run(args,dataset,scores,scores_test,M,i+1)
+            cevae_ihdp.run(args,dataset,scores,scores_test,i+1)
 
-        save_used_cfg(cfg, used_cfg_file)
+            save_used_cfg(cfg, used_cfg_file)
 
 if __name__ == "__main__":
     run("config.txt", 1)
