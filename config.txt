@@ -9,6 +9,7 @@ latent_dim=[25]
 lambda=[3e-5]
 n_hidden=[2]
 size_hidden=[300]
+batch_size=[100]
 
 wass_alpha=[1]
 cfr_n_phi=[2]

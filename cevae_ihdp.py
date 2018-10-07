@@ -1,3 +1,5 @@
+#TODO: rename to cevae_train
+
 #!/usr/bin/env python
 """CEVAE model on IHDP
 """
@@ -19,7 +21,7 @@ from scipy.stats import sem
 from utils import fc_net, get_y0_y1, wasserstein
 
 #TODO: combine other parameters into args
-def run(args,dataset,scores,scores_test,M,run_num):
+def run(args, dataset, scores, scores_test, run_num):
     d = args.latent_dim
     nh = args.n_hidden
     h = args.size_hidden
@@ -53,10 +55,10 @@ def run(args,dataset,scores,scores_test,M,run_num):
             np.random.seed(1)
             tf.set_random_seed(1)
 
-            x_ph_bin = tf.placeholder(tf.float32, [M, len(binfeats)], name='x_bin')  # binary inputs
-            x_ph_cont = tf.placeholder(tf.float32, [M, len(contfeats)], name='x_cont')  # continuous inputs
-            t_ph = tf.placeholder(tf.float32, [M, 1])
-            y_ph = tf.placeholder(tf.float32, [M, 1])
+            x_ph_bin = tf.placeholder(tf.float32, [args.batch_size, len(binfeats)], name='x_bin')  # binary inputs
+            x_ph_cont = tf.placeholder(tf.float32, [args.batch_size, len(contfeats)], name='x_cont')  # continuous inputs
+            t_ph = tf.placeholder(tf.float32, [args.batch_size, 1])
+            y_ph = tf.placeholder(tf.float32, [args.batch_size, 1])
 
             x_ph = tf.concat([x_ph_bin, x_ph_cont], 1)                                      # ph = placeholder?
             activation = tf.nn.elu

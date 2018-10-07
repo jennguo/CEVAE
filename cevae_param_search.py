@@ -115,6 +115,7 @@ def run(cfg_file, num_runs):
         parser.add_argument('-lamba', type=float, default=cfg['lambda']) # weight decay; was 1e-4
         parser.add_argument('-n_hidden', type=int, default=cfg['n_hidden'])  # number of hidden layers; was 3
         parser.add_argument('-size_hidden', type=int, default=cfg['size_hidden']) # size of hidden layers; was 200
+        parser.add_argument('-batch_size', type=int, default=cfg['batch_size'])
 
         parser.add_argument('-use_cfrnet_structure', type=bool, default=(cfg['wass_alpha'] != -1))
         parser.add_argument('-cfr_n_phi', type=int, default=cfg['cfr_n_phi'])
@@ -134,7 +135,6 @@ def run(cfg_file, num_runs):
         scores = np.zeros((args.reps_end-args.reps_begin+1, 3))
         scores_test = np.zeros((args.reps_end-args.reps_begin+1, 3))
 
-        M = None  # batch size during training
 
         cevae_ihdp.run(args,dataset,scores,scores_test,M,i+1)
 
