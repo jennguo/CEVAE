@@ -1,0 +1,25 @@
+This is the command I used for the Twins experiments:
+
+m6_twins_uriver.py -nh $nh -dimz $dimz -noise_bin $noise_bin -treat 'conf_gest_3'
+
+Values of nh were 0-3, values for dimz were 10 or 20, noise_bin is the x-axis in our main figures in the paper, so values range from 0 to 0.5
+
+The ipynb has an example of getting the dataset and running logistic regression on it.
+
+parse_data_uriver.py is the big messy pre-deadline file with the Twins class the generates the data
+
+evaluation.py has some evaluation methods we use for ATE and such, simple stuff
+
+The ipynb should have a minimal working example for getting the dataset and using it.This is the command I used for the Twins experiments:
+
+m6_twins_uriver.py -nh $nh -dimz $dimz -noise_bin $noise_bin -treat 'conf_gest_3'
+
+Values of nh were 0-3, values for dimz were 10 or 20, noise_bin is the x-axis in our main figures in the paper, so values range from 0 to 0.5
+
+The ipynb has an example of getting the dataset and running logistic regression on it.
+
+parse_data_uriver.py is the big messy pre-deadline file with the Twins class the generates the data
+
+evaluation.py has some evaluation methods we use for ATE and such, simple stuff
+
+The ipynb should have a minimal working example for getting the dataset and using it..
