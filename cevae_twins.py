@@ -41,16 +41,19 @@ d = 20  # latent dimension
 lamba = 1e-4  # weight decay
 nh, h = 3, 200  # number and size of hidden layers
 
-for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
+for i, (train, valid, _, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
     print '\nReplication {}/{}'.format(i + 1, args.reps)
-    (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train
-    (xva, tva, yva), (y_cfva, mu0va, mu1va) = valid
-    (xte, tte, yte), (y_cfte, mu0te, mu1te) = test
-    evaluator_test = Evaluator(yte, tte, y_cf=y_cfte, mu0=mu0te, mu1=mu1te)
+    # (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train
+    # (xva, tva, yva), (y_cfva, mu0va, mu1va) = valid
+    (xtr, ttr, ytr), (y_cftr, _, _) = train
+    (xva, tva, yva), (y_cfva, _, _) = valid
+    # (xte, tte, yte), (y_cfte, mu0te, mu1te) = test
+    # evaluator_test = Evaluator(yte, tte, y_cf=y_cfte, mu0=mu0te, mu1=mu1te)
 
     # reorder features with binary first and continuous after
     perm = binfeats + contfeats
-    xtr, xva, xte = xtr[:, perm], xva[:, perm], xte[:, perm]
+    # xtr, xva, xte = xtr[:, perm], xva[:, perm], xte[:, perm]
+    xtr, xva = xtr[:, perm], xva[:, perm]
 
     xalltr, talltr, yalltr = np.concatenate([xtr, xva], axis=0), np.concatenate([ttr, tva], axis=0), np.concatenate([ytr, yva], axis=0)
     evaluator_train = Evaluator(yalltr, talltr, y_cf=np.concatenate([y_cftr, y_cfva], axis=0),
@@ -145,11 +148,11 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
 
         # dictionaries needed for evaluation
         tr0, tr1 = np.zeros((xalltr.shape[0], 1)), np.ones((xalltr.shape[0], 1))
-        tr0t, tr1t = np.zeros((xte.shape[0], 1)), np.ones((xte.shape[0], 1))
+        # tr0t, tr1t = np.zeros((xte.shape[0], 1)), np.ones((xte.shape[0], 1))
         f1 = {x_ph_bin: xalltr[:, 0:len(binfeats)], x_ph_cont: xalltr[:, len(binfeats):], t_ph: tr1}
         f0 = {x_ph_bin: xalltr[:, 0:len(binfeats)], x_ph_cont: xalltr[:, len(binfeats):], t_ph: tr0}
-        f1t = {x_ph_bin: xte[:, 0:len(binfeats)], x_ph_cont: xte[:, len(binfeats):], t_ph: tr1t}
-        f0t = {x_ph_bin: xte[:, 0:len(binfeats)], x_ph_cont: xte[:, len(binfeats):], t_ph: tr0t}
+        # f1t = {x_ph_bin: xte[:, 0:len(binfeats)], x_ph_cont: xte[:, len(binfeats):], t_ph: tr1t}
+        # f0t = {x_ph_bin: xte[:, 0:len(binfeats)], x_ph_cont: xte[:, len(binfeats):], t_ph: tr0t}
 
         for epoch in range(n_epoch):
             avg_loss = 0.0
@@ -185,9 +188,10 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
                 score_train = evaluator_train.calc_stats(y1, y0)
                 rmses_train = evaluator_train.y_errors(y0, y1)
 
-                y0, y1 = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=1)
-                y0, y1 = y0 * ys + ym, y1 * ys + ym
-                score_test = evaluator_test.calc_stats(y1, y0)
+                # y0, y1 = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=1)
+                # y0, y1 = y0 * ys + ym, y1 * ys + ym
+                # score_test = evaluator_test.calc_stats(y1, y0)
+                score_test=[-1, -1, -1]
 
                 print "Epoch: {}/{}, log p(x) >= {:0.3f}, ite_tr: {:0.3f}, ate_tr: {:0.3f}, pehe_tr: {:0.3f}, " \
                       "rmse_f_tr: {:0.3f}, rmse_cf_tr: {:0.3f}, ite_te: {:0.3f}, ate_te: {:0.3f}, pehe_te: {:0.3f}, " \
@@ -201,9 +205,11 @@ for i, (train, valid, test, contfeats, binfeats) in enumerate(dataset.get_train_
         score = evaluator_train.calc_stats(y1, y0)
         scores[i, :] = score
 
-        y0t, y1t = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=100)
-        y0t, y1t = y0t * ys + ym, y1t * ys + ym
-        score_test = evaluator_test.calc_stats(y1t, y0t)
+        # y0t, y1t = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=100)
+        # y0t, y1t = y0t * ys + ym, y1t * ys + ym
+        # score_test = evaluator_test.calc_stats(y1t, y0t)
+        score_test = [-1, -1, -1]
+
         scores_test[i, :] = score_test
 
         print 'Replication: {}/{}, tr_ite: {:0.3f}, tr_ate: {:0.3f}, tr_pehe: {:0.3f}' \
