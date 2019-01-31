@@ -35,8 +35,14 @@ dataset = Twins(path_data='datasets/Twins_shortened/', treatment='conf_gest_3', 
 dimx = 75
 contfeats = list(range(50,75))
 binfeats = list(range(0,50))
-scores = np.zeros((args.reps, 3))
-scores_test = np.zeros((args.reps, 3))
+
+AUC = 0
+AUC_F = 1
+ATE = 2
+PEHE = 3
+NUM_STATS = 4
+tr_stats_across_reps = np.zeros((args.reps, NUM_STATS))
+te_stats_across_reps = np.zeros((args.reps, NUM_STATS))
 
 M = None  # batch size during training
 d = 20  # latent dimension
@@ -186,44 +192,54 @@ for i, (train, valid) in enumerate(dataset.get_train_test(n_splits=args.reps)):
             if epoch % args.print_every == 0:
                 y0, y1 = get_y0_y1(sess, y_post, f0, f1, shape=yalltr.shape, L=1)
                 y0, y1 = y0 * ys + ym, y1 * ys + ym
-                score_train = evaluator_train.calc_stats(y1, y0)
+                tr_stats = evaluator_train.calc_stats_combined(y1, y0)
                 rmses_train = evaluator_train.y_errors(y0, y1)
 
                 # y0, y1 = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=1)
                 # y0, y1 = y0 * ys + ym, y1 * ys + ym
                 # score_test = evaluator_test.calc_stats(y1, y0)
-                score_test=[-1, -1, -1]
 
-                print "Epoch: {}/{}, log p(x) >= {:0.3f}, ite_tr: {:0.3f}, ate_tr: {:0.3f}, pehe_tr: {:0.3f}, " \
-                      "rmse_f_tr: {:0.3f}, rmse_cf_tr: {:0.3f}, ite_te: {:0.3f}, ate_te: {:0.3f}, pehe_te: {:0.3f}, " \
-                      "dt: {:0.3f}".format(epoch + 1, n_epoch, avg_loss, score_train[0], score_train[1], score_train[2],
-                                           rmses_train[0], rmses_train[1], score_test[0], score_test[1], score_test[2],
-                                           time.time() - t0)
+
+                print "Epoch: {}/{}, ".format(epoch + 1, n_epoch) + \
+                      "log p(x) >= {:0.3f}, ".format(avg_loss) + \
+                      "auc_tr: {:0.3f}, ".format(tr_stats[AUC]) + \
+                      "auc_f_tr: {:0.3f}, ".format(tr_stats[AUC_F]) + \
+                      "ate_tr: {:0.3f}, ".format(tr_stats[ATE]) + \
+                      "pehe_tr: {:0.3f}, ".format(tr_stats[PEHE]) + \
+                      "rmse_f_tr: {:0.3f}, ".format(rmses_train[0]) + \
+                      "rmse_cf_tr: {:0.3f}, ".format(rmses_train[1]) + \
+                      "dt: {:0.3f}".format(time.time() - t0)
 
         saver.restore(sess, 'models/m6-ihdp')
         y0, y1 = get_y0_y1(sess, y_post, f0, f1, shape=yalltr.shape, L=100)
         y0, y1 = y0 * ys + ym, y1 * ys + ym
-        score = evaluator_train.calc_stats(y1, y0)
-        scores[i, :] = score
+        tr_stats = evaluator_train.calc_stats_combined(y1, y0)
+        tr_stats_across_reps[i, :] = tr_stats
 
         # y0t, y1t = get_y0_y1(sess, y_post, f0t, f1t, shape=yte.shape, L=100)
         # y0t, y1t = y0t * ys + ym, y1t * ys + ym
         # score_test = evaluator_test.calc_stats(y1t, y0t)
-        score_test = [-1, -1, -1]
 
-        scores_test[i, :] = score_test
 
-        print 'Replication: {}/{}, tr_ite: {:0.3f}, tr_ate: {:0.3f}, tr_pehe: {:0.3f}' \
-              ', te_ite: {:0.3f}, te_ate: {:0.3f}, te_pehe: {:0.3f}'.format(i + 1, args.reps,
-                                                                            score[0], score[1], score[2],
-                                                                            score_test[0], score_test[1], score_test[2])
+        print 'Replication: {}/{}, '.format(i + 1, args.reps) + \
+              'auc_tr: {:0.3f}, '.format(tr_stats[AUC]) + \
+              'auc_f_tr: {:0.3f}, '.format(tr_stats[AUC_F]) + \
+              'ate_tr: {:0.3f}, '.format(tr_stats[ATE]) + \
+              'pehe_tr: {:0.3f} '.format(tr_stats[PEHE]) #+ \
         sess.close()
 
 print 'CEVAE model total scores'
-means, stds = np.mean(scores, axis=0), sem(scores, axis=0)
-print 'train ITE: {:.3f}+-{:.3f}, train ATE: {:.3f}+-{:.3f}, train PEHE: {:.3f}+-{:.3f}' \
-      ''.format(means[0], stds[0], means[1], stds[1], means[2], stds[2])
+means, stds = np.mean(tr_stats_across_reps, axis=0), sem(tr_stats_across_reps, axis=0)
+print 'train AUC: {:.3f}+-{:.3f}, '  .format(means[AUC],   stds[AUC]) + \
+      'train AUC_F: {:.3f}+-{:.3f}, '.format(means[AUC_F], stds[AUC_F]) + \
+      'train ATE: {:.3f}+-{:.3f}, '  .format(means[ATE],   stds[ATE]) + \
+      'train PEHE: {:.3f}+-{:.3f}'   .format(means[PEHE],  stds[PEHE])
 
-means, stds = np.mean(scores_test, axis=0), sem(scores_test, axis=0)
-print 'test ITE: {:.3f}+-{:.3f}, test ATE: {:.3f}+-{:.3f}, test PEHE: {:.3f}+-{:.3f}' \
-      ''.format(means[0], stds[0], means[1], stds[1], means[2], stds[2])
+
+means, stds = np.mean(te_stats_across_reps, axis=0), sem(te_stats_across_reps, axis=0)
+print 'test AUC: {:.3f}+-{:.3f}, '  .format(means[AUC],   stds[AUC]) + \
+      'test AUC_F: {:.3f}+-{:.3f}, '.format(means[AUC_F], stds[AUC_F]) + \
+      'test ATE: {:.3f}+-{:.3f}, '  .format(means[ATE],   stds[ATE]) + \
+      'test PEHE: {:.3f}+-{:.3f}'   .format(means[PEHE],  stds[PEHE])
+
+
