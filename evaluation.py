@@ -106,7 +106,18 @@ class EvaluatorTwins(object):
         dir_error = np.mean((np.sign(ypred1[inds]-ypred0[inds]))==(np.sign(self.y1[inds]-self.y0[inds])))
         return dir_error
         
+    #pasted from IHDP Evaluator above:
+    def y_errors(self, y0, y1):
+        ypred = (1 - self.t) * y0 + self.t * y1
+        ypred_cf = self.t * y0 + (1 - self.t) * y1
+        return self.y_errors_pcf(ypred, ypred_cf)
 
+    # pasted from IHDP Evaluator above:
+    def y_errors_pcf(self, ypred, ypred_cf):
+        # print ypred.shape
+        rmse_factual = np.sqrt(np.mean(np.square(ypred - self.y)))
+        rmse_cfactual = np.sqrt(np.mean(np.square(ypred_cf - self.y_cf)))
+        return rmse_factual, rmse_cfactual
 
 def calc_stats(y, t, y_j, ypred_t1, ypred_t0):
     idx1, idx0 = np.where(t == 1), np.where(t == 0)
