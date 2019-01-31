@@ -10,8 +10,8 @@ import tensorflow as tf
 from edward.models import Bernoulli, Normal
 from progressbar import ETA, Bar, Percentage, ProgressBar
 
-from datasets import IHDP
-from evaluation import Evaluator
+from parse_data_uriver import Twins
+from evaluation import EvaluatorTwins
 import numpy as np
 import time
 from scipy.stats import sem
@@ -22,7 +22,7 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument('-reps', type=int, default=10)
 parser.add_argument('-earl', type=int, default=10)
-parser.add_argument('-lr', type=float, default=0.001)
+parser.add_argument('-lr', type=float, default=0.0001)
 parser.add_argument('-opt', choices=['adam', 'adamax'], default='adam')
 parser.add_argument('-epochs', type=int, default=100)
 parser.add_argument('-print_every', type=int, default=10)
@@ -31,8 +31,10 @@ args = parser.parse_args()
 args.true_post = True
 
 
-dataset = IHDP(replications=args.reps)
-dimx = 25
+dataset = Twins(path_data='datasets/Twins_shortened/', treatment='conf_gest_3', noise_bin=0.333) #hypars here
+dimx = 75
+contfeats = list(range(50,75))
+binfeats = list(range(0,50))
 scores = np.zeros((args.reps, 3))
 scores_test = np.zeros((args.reps, 3))
 
@@ -41,12 +43,12 @@ d = 20  # latent dimension
 lamba = 1e-4  # weight decay
 nh, h = 3, 200  # number and size of hidden layers
 
-for i, (train, valid, _, contfeats, binfeats) in enumerate(dataset.get_train_valid_test()):
+for i, (train, valid) in enumerate(dataset.get_train_test(n_splits=args.reps)):
     print '\nReplication {}/{}'.format(i + 1, args.reps)
     # (xtr, ttr, ytr), (y_cftr, mu0tr, mu1tr) = train
     # (xva, tva, yva), (y_cfva, mu0va, mu1va) = valid
-    (xtr, ttr, ytr), (y_cftr, _, _) = train
-    (xva, tva, yva), (y_cfva, _, _) = valid
+    xtr, ttr, ytr, y_cftr = train
+    xva, tva, yva, y_cfva = valid
     # (xte, tte, yte), (y_cfte, mu0te, mu1te) = test
     # evaluator_test = Evaluator(yte, tte, y_cf=y_cfte, mu0=mu0te, mu1=mu1te)
 
@@ -56,8 +58,7 @@ for i, (train, valid, _, contfeats, binfeats) in enumerate(dataset.get_train_val
     xtr, xva = xtr[:, perm], xva[:, perm]
 
     xalltr, talltr, yalltr = np.concatenate([xtr, xva], axis=0), np.concatenate([ttr, tva], axis=0), np.concatenate([ytr, yva], axis=0)
-    evaluator_train = Evaluator(yalltr, talltr, y_cf=np.concatenate([y_cftr, y_cfva], axis=0),
-                                mu0=np.concatenate([mu0tr, mu0va], axis=0), mu1=np.concatenate([mu1tr, mu1va], axis=0))
+    evaluator_train = EvaluatorTwins(yalltr, talltr, y_cf=np.concatenate([y_cftr, y_cfva], axis=0))
 
     # zero mean, unit variance for y during training
     ym, ys = np.mean(ytr), np.std(ytr)

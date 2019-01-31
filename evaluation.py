@@ -96,6 +96,11 @@ class EvaluatorTwins(object):
         auc_f = roc_auc_score(self.y, y_f)
         return auc, auc_f
     
+
+    def calc_stats_combined(self, ypred1, ypred0):
+        return self.calc_stats(ypred1, ypred0) + self.calc_stats2(ypred1, ypred0)
+        # order: auc, auc_f, ate, pehe
+
     def calc_dir_error(self, ypred1, ypred0):
         inds = self.y1!=self.y0
         dir_error = np.mean((np.sign(ypred1[inds]-ypred0[inds]))==(np.sign(self.y1[inds]-self.y0[inds])))
